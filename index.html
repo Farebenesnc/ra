@@ -346,9 +346,10 @@ function fetchWPNews(cb){
   xhr.open("GET",url,true);
   xhr.timeout=15000;
   xhr.onload=function(){
+    var dbg2=document.getElementById("homeNews");if(dbg2)dbg2.innerHTML+='<div style="font-size:10px;color:#888;padding:4px 14px">Risposta: '+xhr.status+' len:'+xhr.responseText.length+'</div>';
     try{
       var posts=JSON.parse(xhr.responseText);
-      if(!Array.isArray(posts)||!posts.length){cb("no posts");return;}
+      if(!Array.isArray(posts)||!posts.length){cb("no posts: "+xhr.responseText.substring(0,100));return;}
       var items=posts.map(function(p){
         var img="";
         try{img=p.episode_featured_image||"";}catch(e){}
@@ -361,6 +362,8 @@ function fetchWPNews(cb){
   };
   xhr.onerror=function(){cb("network");};
   xhr.ontimeout=function(){cb("timeout");};
+  
+  var dbgEl=document.getElementById("homeNews");if(dbgEl)dbgEl.innerHTML+='<div style="font-size:10px;color:#888;padding:4px 14px">Chiamata API...</div>';
   xhr.send();
 }
 
@@ -481,11 +484,15 @@ function renderHome(){
   var items=cache.news||FB_NEWS;
   buildHomeCards(items.slice(0,3));
   if(!cache.news){
+    document.getElementById("homeNews").innerHTML+='<div style="font-size:11px;color:#888;padding:8px 14px">Connessione in corso...</div>';
     fetchWPNews(function(err,items){
       if(!err&&items&&items.length){
         cache.news=items;
         buildHomeCards(cache.news.slice(0,3));
         if(done.notizie)buildNewsList(cache.news);
+      } else {
+        var dbg=document.getElementById("homeNews");
+        if(dbg)dbg.innerHTML+='<div style="font-size:11px;color:red;padding:8px 14px">Errore: '+String(err)+'</div>';
       }
     });
   }
