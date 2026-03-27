@@ -341,7 +341,7 @@ function xget(url,cb){
 
 // Fetch WordPress REST API via corsproxy (no redirect issues on Android)
 function fetchWPNews(cb){
-  var url="https://corsproxy.io/?url=https%3A%2F%2Fwww.radioascoli.it%2Fwp-json%2Fwp%2Fv2%2Fposts%3Fper_page%3D20%26_embed%3Dtrue";
+  var url="https://corsproxy.io/?url=https%3A%2F%2Fwww.radioascoli.it%2Fwp-json%2Fwp%2Fv2%2Fposts%3Fper_page%3D15";
   var xhr=new XMLHttpRequest();
   xhr.open("GET",url,true);
   xhr.timeout=15000;
@@ -351,7 +351,7 @@ function fetchWPNews(cb){
       if(!Array.isArray(posts)||!posts.length){cb("no posts");return;}
       var items=posts.map(function(p){
         var img="";
-        try{  if(p._embedded&&p._embedded["wp:featuredmedia"]&&p._embedded["wp:featuredmedia"][0])    img=p._embedded["wp:featuredmedia"][0].source_url||"";  else if(p.episode_featured_image)    img=p.episode_featured_image;}catch(e){if(p.episode_featured_image)img=p.episode_featured_image;}
+        try{img=p.episode_featured_image||"";}catch(e){}
         var content=(p.content&&p.content.rendered)||"";
         var desc=((p.excerpt&&p.excerpt.rendered)||"").replace(/<[^>]+>/g,"").trim().substring(0,300);
         return {title:dec((p.title&&p.title.rendered)||""),link:p.link||"",pubDate:p.date||"",desc:desc,description:desc,content:content,image:img,img:img};
