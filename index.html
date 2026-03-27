@@ -320,6 +320,8 @@ body{font-family:var(--ff);color:var(--tx);display:flex;flex-direction:column}
 
 <audio id="aud" preload="none"></audio>
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+var WP_NEWS="https://corsproxy.io/?url=https://www.radioascoli.it/wp-json/wp/v2/posts?per_page=20&_embed=true";
+var WP_POD_BASE="https://corsproxy.io/?url=https://www.radioascoli.it";
 var GAS="https://script.google.com/macros/s/AKfycbxBZihg4U2ZFlxm075-VIlmTHgBrmW4uCAhAVEKyzWFeOvZ7dMMgH282e-RJcdqiIA/exec";
 var STREAM="https://ice09.fluidstream.net/fluid0909.mp3";
 var FB_NEWS=[{"title":"Beni culturali: torna il corso per operatori volontari","desc":"C'e' tempo fino al 17 aprile per iscriversi al corso della Diocesi di Ascoli Piceno.","img":"https://www.radioascoli.it/wp-content/uploads/2026/03/Museo-Diocesano-corso-beni-culturali-400x250.jpg","link":"http://www.radioascoli.it/indexphp/2026/03/21/beni-culturali-ecclesiastici-torna-il-corso-per-operatori-volontari/","date":"2026-03-20"},{"title":"A(p)puntino. Il nuovo residente con il muso lungo","desc":"Gli avvistamenti di cinghiali in tutto il Piceno si sono trasformati in appuntamenti.","img":"https://www.radioascoli.it/wp-content/uploads/2026/03/cinghiali-citta-piceno-400x250.jpg","link":"http://www.radioascoli.it/indexphp/2026/03/20/appuntino-quel-nuovo-residente-con-il-muso-lungo-e-il-pelo-sullo-stomaco/","date":"2026-03-20"},{"title":"Libreria Rinascita compie 50 anni","desc":"La storica libreria ascolana festeggia il mezzo secolo con musica e lettura.","img":"https://www.radioascoli.it/wp-content/uploads/2026/03/rinascita-50-anni-400x250.jpg","link":"http://www.radioascoli.it/indexphp/2026/03/20/libreria-rinascita-compie-50-anni-in-arrivo-lapp-per-lo-scambio-dei-libri/","date":"2026-03-20"},{"title":"La Caritas che accoglie: 40 ucraini integrati","desc":"L'accoglienza dei profughi ucraini si e' trasformata in un percorso di integrazione.","img":"https://www.radioascoli.it/wp-content/uploads/2026/03/accoglienza-ucraini-400x250.jpg","link":"http://www.radioascoli.it/indexphp/2026/03/19/la-caritas-che-accoglie-dallemergenza-allintegrazione-per-40-ucraini/","date":"2026-03-19"},{"title":"Commercio Ascoli: aumentano le chiusure","desc":"Difficolta' per le attivita' economiche: caro-affitti e commercio online.","img":"https://www.radioascoli.it/wp-content/uploads/2026/03/chiusura-400x250.jpg","link":"http://www.radioascoli.it/indexphp/2026/03/18/commercio-ascoli-aumentano-le-chiusure-cresce-solo-il-food/","date":"2026-03-18"},{"title":"Laboratori didattici solidali per bambini immigrati","desc":"I Laboratori Caritas permettono a 150 bambini di avere supporto scolastico.","img":"https://www.radioascoli.it/wp-content/uploads/2026/03/28pol3-scuola-bambini-immigrati-400x250.jpg","link":"http://www.radioascoli.it/indexphp/2026/03/17/laboratori-didattici-solidali-sostegno-concreto-per-bambini-immigrati/","date":"2026-03-17"},{"title":"L'orto in casa, una passione nel Piceno","desc":"Coltivare in appartamento: risparmio e consapevolezza alimentare.","img":"https://www.radioascoli.it/wp-content/uploads/2026/03/Orto-Invernale-400x250.jpg","link":"http://www.radioascoli.it/indexphp/2026/03/16/lorto-in-casa-una-passione-in-crescita-anche-nel-piceno/","date":"2026-03-16"},{"title":"Nasce il centro Madre Antonia delle Suore Oblate","desc":"Nato a San Benedetto il centro diurno per donne in situazione di vulnerabilita'.","img":"https://www.radioascoli.it/wp-content/uploads/2026/03/Violenza-Donne-400x250.jpg","link":"http://www.radioascoli.it/indexphp/2026/03/13/donne-a-rischio-di-sfruttamento-nasce-il-centro-madre-antonia-delle-suore-oblate/","date":"2026-03-13"},{"title":"A San Benedetto il campionato delle autocandidature","desc":"La corsa a sindaco: tanti candidati, nessuna squadra ancora formata.","img":"https://www.radioascoli.it/wp-content/uploads/2026/03/appuntino-400x250.jpg","link":"http://www.radioascoli.it/indexphp/2026/03/13/appuntino-al-via-a-san-benedetto-un-altro-campionato-quello-delle-autocandidature/","date":"2026-03-13"}];
@@ -335,6 +337,75 @@ function xget(url,cb){
   xhr.onerror=function(){cb('network');};
   xhr.ontimeout=function(){cb('timeout');};
   xhr.send();
+}
+
+// Fetch WordPress REST API via corsproxy (no redirect issues on Android)
+function fetchWPNews(cb){
+  var url="https://corsproxy.io/?url="+encodeURIComponent("https://www.radioascoli.it/wp-json/wp/v2/posts?per_page=20&_embed=true");
+  var xhr=new XMLHttpRequest();
+  xhr.open("GET",url,true);
+  xhr.timeout=15000;
+  xhr.onload=function(){
+    try{
+      var posts=JSON.parse(xhr.responseText);
+      if(!Array.isArray(posts)||!posts.length){cb("no posts");return;}
+      var items=posts.map(function(p){
+        var img="";
+        try{img=p._embedded["wp:featuredmedia"][0].source_url||"";}catch(e){}
+        var content=(p.content&&p.content.rendered)||"";
+        var desc=((p.excerpt&&p.excerpt.rendered)||"").replace(/<[^>]+>/g,"").trim().substring(0,300);
+        return {title:dec((p.title&&p.title.rendered)||""),link:p.link||"",pubDate:p.date||"",desc:desc,description:desc,content:content,image:img,img:img};
+      });
+      cb(null,items);
+    }catch(e){cb("parse");}
+  };
+  xhr.onerror=function(){cb("network");};
+  xhr.ontimeout=function(){cb("timeout");};
+  xhr.send();
+}
+
+function fetchPodEpisodes(podUrl,cb){
+  var url="https://corsproxy.io/?url="+encodeURIComponent(podUrl);
+  var xhr=new XMLHttpRequest();
+  xhr.open("GET",url,true);
+  xhr.timeout=15000;
+  xhr.onload=function(){
+    try{
+      var html=xhr.responseText;
+      var eps=[];
+      var h5Re=/<h5[^>]*>([sS]*?)</h5>([sS]*?)(?=<h5|<footer|</main)/gi;
+      var m;
+      while((m=h5Re.exec(html))!==null){
+        var date=m[1].replace(/<[^>]+>/g,"").trim();
+        var block=m[2];
+        var lm=block.match(/href=["'](https://soundcloud.com/user-186724097/[^"'\s]+)["'][^>]*title=["']([ ^"']+)["']/i);
+        if(lm&&lm[1]!=="https://soundcloud.com/user-186724097"){
+          var ep={date:date,title:lm[2],soundcloudUrl:lm[1]};
+          var im=block.match(/src=["'](https://w.soundcloud.com/player/[^"']+)["']/i);
+          if(im)ep.iframeSrc=im[1].replace(/&#038;/g,"&");
+          eps.push(ep);
+        }
+      }
+      if(eps.length===0){
+        var re2=/href=["'](https://soundcloud.com/user-186724097/[^"'\s]+)["'][^>]*title=["']([ ^"']+)["']/gi;
+        var seen={};
+        while((m=re2.exec(html))!==null){
+          if(m[1]!=="https://soundcloud.com/user-186724097"&&!seen[m[1]]){
+            seen[m[1]]=true;eps.push({date:"",title:m[2],soundcloudUrl:m[1]});
+          }
+        }
+      }
+      cb(null,eps);
+    }catch(e){cb("parse");}
+  };
+  xhr.onerror=function(){cb("network");};
+  xhr.ontimeout=function(){cb("timeout");};
+  xhr.send();
+}
+
+function dec(s){
+  return String(s||"").replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"')
+    .replace(/&#039;/g,"'").replace(/&#(\d+);/g,function(_,n){return String.fromCharCode(parseInt(n));});
 }
 
 var aud=document.getElementById('aud');
@@ -410,9 +481,9 @@ function renderHome(){
   var items=cache.news||FB_NEWS;
   buildHomeCards(items.slice(0,3));
   if(!cache.news){
-    xget(GAS+'?type=news',function(err,d){
-      if(!err&&d&&d.ok&&d.items&&d.items.length){
-        cache.news=d.items;
+    fetchWPNews(function(err,items){
+      if(!err&&items&&items.length){
+        cache.news=items;
         buildHomeCards(cache.news.slice(0,3));
         if(done.notizie)buildNewsList(cache.news);
       }
@@ -438,9 +509,9 @@ function buildHomeCards(items){
 function renderNotizie(){
   if(cache.news){buildNewsList(cache.news);return;}
   document.getElementById('newsList').innerHTML='<div class="spin-wrap"><div class="spin"></div>Caricamento...</div>';
-  xget(GAS+'?type=news',function(err,d){
-    if(!err&&d&&d.ok&&d.items&&d.items.length){
-      cache.news=d.items;buildNewsList(cache.news);
+  fetchWPNews(function(err,items){
+    if(!err&&items&&items.length){
+      cache.news=items;buildNewsList(cache.news);
       if(done.home)buildHomeCards(cache.news.slice(0,3));
     }else{buildNewsList(FB_NEWS);}
   });
@@ -494,8 +565,8 @@ function openNews(i){
   document.getElementById('reader').classList.add('on');
   if(n.content&&n.content.length>200){showNews(n);return;}
   document.getElementById('rbody').innerHTML='<div class="spin-wrap"><div class="spin"></div>Caricamento...</div>';
-  xget(GAS+'?type=news',function(err,d){
-    if(!err&&d&&d.ok&&d.items&&d.items[i]){cache.news=d.items;showNews(d.items[i]);}
+  fetchWPNews(function(err,items){
+    if(!err&&items&&items[i]){cache.news=items;showNews(items[i]);}
     else showNews(n);
   });
 }
@@ -529,8 +600,8 @@ function openPod(i){
   document.getElementById('rt').textContent=p.title;
   document.getElementById('rbody').innerHTML='<div class="spin-wrap"><div class="spin"></div>Caricamento puntate...</div>';
   document.getElementById('reader').classList.add('on');
-  xget(GAS+'?action=podcast&url='+encodeURIComponent(p.link),function(err,d){
-    if(!err&&d&&d.ok&&d.episodes&&d.episodes.length)showPod(p,d.episodes);
+  fetchPodEpisodes(p.link,function(err,eps){
+    if(!err&&eps&&eps.length)showPod(p,eps);
     else showPodFb(p);
   });
 }
