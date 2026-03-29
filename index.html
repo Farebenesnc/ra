@@ -584,27 +584,31 @@ document.querySelectorAll('input[name=aded]').forEach(function(r){
 
 function gv(id){var e=document.getElementById(id);if(!e)return'';if(e.type==='checkbox')return e.checked?'SI':'';return e.value.trim();}
 function cc(tid,cid,max){var e=document.getElementById(tid),c=document.getElementById(cid);if(e&&c)c.textContent=e.value.length+'/'+max;}
+var FORMSPREE="https://formspree.io/f/xlgpyvvo";
 function sub(id){
   var ok=true;
   var req={ascolta:['a-nome','a-canz','a-priv'],pub:['p-nome','p-cog','p-az','p-email','p-tel','p-priv'],altro:['o-nome','o-cog','o-email','o-tipo','o-msg','o-priv']};
+  var labels={ascolta:[['Nome','a-nome'],['Canzone','a-canz'],['Dedica a','a-dest'],['Messaggio','a-msg']],pub:[['Nome','p-nome'],['Cognome','p-cog'],['Azienda','p-az'],['Email','p-email'],['Tel','p-tel']],altro:[['Nome','o-nome'],['Cognome','o-cog'],['Email','o-email'],['Tipo','o-tipo'],['Messaggio','o-msg']]};
   var dest={ascolta:'redazione@radioascoli.it',pub:'commerciale@radioascoli.it',altro:'redazione@radioascoli.it'};
-  var subj={ascolta:'Richiesta musicale - App',pub:'Richiesta pubblicitaria - App',altro:'Richiesta - App'};
-  var maps={
-    ascolta:[['Nome','a-nome'],['Canzone','a-canz'],['Dedica a','a-dest'],['Messaggio','a-msg']],
-    pub:[['Nome','p-nome'],['Cognome','p-cog'],['Azienda','p-az'],['Email','p-email'],['Tel','p-tel']],
-    altro:[['Nome','o-nome'],['Cognome','o-cog'],['Email','o-email'],['Tipo','o-tipo'],['Messaggio','o-msg']]
-  };
-  (req[id]||[]).forEach(function(fid){
-    var e=document.getElementById(fid);if(!e)return;
-    if(e.type==='checkbox'&&!e.checked)ok=false;
-    else if(e.type!=='checkbox'&&!e.value.trim())ok=false;
-  });
+  var tipi={ascolta:'Richiesta musicale',pub:'Richiesta pubblicitaria',altro:'Messaggio'};
+  (req[id]||[]).forEach(function(fid){var e=document.getElementById(fid);if(!e)return;if(e.type==='checkbox'&&!e.checked)ok=false;else if(e.type!=='checkbox'&&!e.value.trim())ok=false;});
   var fb=document.getElementById('fm-'+id);
-  if(!ok){fb.textContent='Compila tutti i campi obbligatori.';fb.className='fmsg err';return;}
-  var body=(maps[id]||[]).map(function(m){var v=gv(m[1]);return v?m[0]+': '+v:'';}).filter(Boolean).join('\n');
-  window.location.href='mailto:'+dest[id]+'?subject='+encodeURIComponent(subj[id])+'&body='+encodeURIComponent(body);
-  fb.textContent='Il tuo client email si sta aprendo.';fb.className='fmsg ok';
-  setTimeout(function(){fb.className='fmsg';},8000);
+  if(!ok){fb.textContent='Compila tutti i campi obbligatori.';fb.className='fmsg err';fb.scrollIntoView({behavior:'smooth',block:'center'});return;}
+  var data={_subject:tipi[id]+' - Radio Ascoli App',_replyto:dest[id],tipo:tipi[id],destinatario:dest[id]};
+  (labels[id]||[]).forEach(function(m){var v=gv(m[1]);if(v)data[m[0]]=v;});
+  fb.textContent='Invio in corso...';fb.className='fmsg ok';
+  var btn=document.querySelector('#f-'+id+' .fsbm');if(btn)btn.disabled=true;
+  fetch(FORMSPREE,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(data)})
+  .then(function(r){return r.json();})
+  .then(function(d){
+    if(d.ok||d.next){
+      fb.textContent='Messaggio inviato! Ti risponderemo presto.';fb.className='fmsg ok';
+      document.querySelectorAll('#f-'+id+' input:not([type=radio]):not([type=checkbox]),#f-'+id+' select,#f-'+id+' textarea').forEach(function(e){e.value='';});
+      document.querySelectorAll('#f-'+id+' input[type=checkbox]').forEach(function(e){e.checked=false;});
+    }else{fb.textContent='Errore. Riprova.';fb.className='fmsg err';}
+  })
+  .catch(function(){fb.textContent='Errore di rete.';fb.className='fmsg err';})
+  .finally(function(){if(btn)btn.disabled=false;});
 }
 
 
