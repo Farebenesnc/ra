@@ -1,9 +1,9 @@
 {
   "name": "Radio Ascoli",
   "short_name": "RadioAscoli",
-  "description": "La Voce della Comunità - inBlu",
-  "start_url": "/",
-  "scope": "/",
+  "description": "La Voce della Comunità",
+  "start_url": "/ra/",
+  "scope": "/ra/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#29ABE2",
