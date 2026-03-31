@@ -617,14 +617,13 @@ function dec(s){
 }
 
 function fetchWPNews(cb){
-  var url="https://api.allorigins.win/get?url="+encodeURIComponent("https://www.radioascoli.it/wp-json/wp/v2/posts?per_page=15");
+  var url="https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent("https://www.radioascoli.it/wp-json/wp/v2/posts?per_page=15");
   var xhr=new XMLHttpRequest();
   xhr.open("GET",url,true);
   xhr.timeout=15000;
   xhr.onload=function(){
     try{
-      var wr=JSON.parse(xhr.responseText);
-      var posts=JSON.parse(wr.contents);
+      var posts=JSON.parse(xhr.responseText);
       if(!Array.isArray(posts)||!posts.length){cb("no posts");return;}
       var items=posts.map(function(p){
         var img=p.episode_featured_image||"";
@@ -643,14 +642,13 @@ function fetchWPNews(cb){
 }
 
 function fetchPodEpisodes(podUrl,cb){
-  var url="https://api.allorigins.win/get?url="+encodeURIComponent(podUrl);
+  var url="https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(podUrl);
   var xhr=new XMLHttpRequest();
   xhr.open("GET",url,true);
   xhr.timeout=15000;
   xhr.onload=function(){
     try{
-      var wr2=JSON.parse(xhr.responseText);
-      var htm=wr2.contents;
+      var htm=xhr.responseText;
       var eps=[];
       var seen={};
       var sc="soundcloud.com/user-186724097/";
