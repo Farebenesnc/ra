@@ -617,28 +617,40 @@ function dec(s){
 }
 
 function fetchWPNews(cb){
-  var url="https://corsproxy.io/?url=https%3A%2F%2Fwww.radioascoli.it%2Fwp-json%2Fwp%2Fv2%2Fposts%3Fper_page%3D15";
-  var xhr=new XMLHttpRequest();
-  xhr.open("GET",url,true);
-  xhr.timeout=15000;
-  xhr.onload=function(){
-    try{
-      var posts=JSON.parse(xhr.responseText);
-      if(!Array.isArray(posts)||!posts.length){cb("no posts");return;}
-      var items=posts.map(function(p){
-        var img=p.episode_featured_image||"";
-        var content=(p.content&&p.content.rendered)||"";
-        var desc=((p.excerpt&&p.excerpt.rendered)||"").replace(/<[^>]+>/g,"").trim().substring(0,300);
-        var title=String((p.title&&p.title.rendered)||"");
-        title=title.replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&#039;/g,"'");
-        return {title:title,link:p.link||"",pubDate:p.date||"",desc:desc,description:desc,content:content,image:img,img:img};
-      });
-      cb(null,items);
-    }catch(e){cb("parse:"+e.message);}
-  };
-  xhr.onerror=function(){cb("network");};
-  xhr.ontimeout=function(){cb("timeout");};
-  xhr.send();
+  var proxies=[
+    "https://corsproxy.io/?url=",
+    "https://api.codetabs.com/v1/proxy?quest=",
+    "https://thingproxy.freeboard.io/fetch/"
+  ];
+  var wpUrl="https://www.radioascoli.it/wp-json/wp/v2/posts?per_page=15";
+  function tryProxy(i){
+    if(i>=proxies.length){cb("all failed");return;}
+    var url=proxies[i]+encodeURIComponent(wpUrl);
+    var xhr=new XMLHttpRequest();
+    xhr.open("GET",url,true);
+    xhr.timeout=12000;
+    xhr.onload=function(){
+      try{
+        var txt=xhr.responseText;
+        if(txt.indexOf('{"contents":')=== 0){var w=JSON.parse(txt);txt=w.contents;}
+        var posts=JSON.parse(txt);
+        if(!Array.isArray(posts)||!posts.length){tryProxy(i+1);return;}
+        var items=posts.map(function(p){
+          var img=p.episode_featured_image||"";
+          var content=(p.content&&p.content.rendered)||"";
+          var desc=((p.excerpt&&p.excerpt.rendered)||"").replace(/<[^>]+>/g,"").trim().substring(0,300);
+          var title=String((p.title&&p.title.rendered)||"");
+          title=title.replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&#039;/g,"'");
+          return {title:title,link:p.link||"",pubDate:p.date||"",desc:desc,description:desc,content:content,image:img,img:img};
+        });
+        cb(null,items);
+      }catch(e){tryProxy(i+1);}
+    };
+    xhr.onerror=function(){tryProxy(i+1);};
+    xhr.ontimeout=function(){tryProxy(i+1);};
+    xhr.send();
+  }
+  tryProxy(0);
 }
 
 function fetchPodEpisodes(podUrl,cb){
